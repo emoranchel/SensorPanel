@@ -134,10 +134,13 @@ public class Main {
     File control = new File("LOCKFILE");
     control.deleteOnExit();
     if (control.exists()) {
+      System.out.println("STOPPING CURRENT INSTANCE");
       control.delete();
       System.exit(0);
     }
 
+    System.out.println("Starting system...");
+    
     control.createNewFile();
 
     GrovePi grovePi = new GrovePiDio();

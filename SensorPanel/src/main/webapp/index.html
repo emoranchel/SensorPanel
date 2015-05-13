@@ -10,6 +10,7 @@
     <style>
       .Sensor{
         border: 1px solid #0f1b62; padding: 4px; margin: 10px;
+        background: #cccccc;
       }
     </style>
     <script>
@@ -19,11 +20,11 @@
           var data = event.data.split("|");
           var sensor = $("#" + data[0]);
           if (!sensor.length) {
-            sensor = $("<div class=\"Sensor\"></div>");
+            sensor = $("<div class=\"Sensor\" id=\"" + data[0] + "\"></div>");
             $("#content").append(sensor);
           }
           sensor.html(data[0] + ": <b>" + data[1] + "</b>");
-          sensor.effect("Highlight", {}, 500);
+          sensor.effect("highlight", {}, 1500);
         };
       });
     </script>
