@@ -9,3 +9,6 @@ buildNumber.properties
 /GrovePiSensorPanelClient/nbproject/private/
 /GrovePiSensorPanelClient/dist/
 /GrovePiSensorPanelClient/build/
+/RestRaspberryLedClient/nbproject/private/
+/RestRaspberryLedClient/dist/
+/RestRaspberryLedClient/build/
