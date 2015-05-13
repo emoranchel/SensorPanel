@@ -31,6 +31,7 @@ import org.iot.raspberry.grovepi.dio.GrovePiDio;
 public class Main {
 
   private void open(GrovePi grovePi) throws IOException {
+    System.out.println("Opening Sensors");
     lightSensor = new GroveLightSensor(grovePi, 0);
     potenciometer = new GroveRotarySensor(grovePi, 1);
     soundSensor = new GroveSoundSensor(grovePi, 2);
@@ -41,13 +42,18 @@ public class Main {
     redLed = grovePi.getDigitalOut(6);
     blueLed = grovePi.getDigitalOut(7);
 
-    lcd = grovePi.getLCD();
+    button.setListener((oldVal, newVal) -> send("button", Boolean.toString(newVal)));
 
+    lcd = grovePi.getLCD();
+    System.out.println("Opening HTTP client");
     Client client = ClientBuilder.newClient();
     webTarget = client.target("http://192.168.1.100:8080/SensorPanel/rest/sensors/");
     httpExecutor = Executors.newSingleThreadExecutor();
-  }
 
+    buttonMonitor = Executors.newSingleThreadScheduledExecutor();
+    buttonMonitor.scheduleAtFixedRate(button, 0, 100, TimeUnit.MILLISECONDS);
+  }
+  private ScheduledExecutorService buttonMonitor;
   private ExecutorService httpExecutor;
   private WebTarget webTarget;
 
@@ -62,10 +68,9 @@ public class Main {
   private GroveSoundSensor soundSensor;
 
   public void run(GrovePi grovePi, AtomicBoolean running) throws Exception {
-    button.setListener((oldVal, newVal) -> send("button", Boolean.toString(newVal)));
-    ScheduledExecutorService buttonMonitor = Executors.newSingleThreadScheduledExecutor();
-    buttonMonitor.scheduleAtFixedRate(button, 0, 100, TimeUnit.MILLISECONDS);
+    System.out.println("Starting up");
     while (running.get()) {
+      System.out.println("In main loop");
       try {
         lcd.setRGB(80, 150, 80);
         send("ultrasonicRanger", String.format("%.2f", ranger.get()));
@@ -77,8 +82,8 @@ public class Main {
         send("potenciometer_sensorValue", String.format("%.2f", potenciometerVal.getSensorValue()));
         send("potenciometer_voltage", String.format("%.2f", potenciometerVal.getVoltage()));
         GroveTemperatureAndHumidityValue dht = tempSensor.get();
-        send("Temperature", String.format("%.2f", dht.getTemperature()));
-        send("Humidity", String.format("%.2f", dht.getHumidity()));
+        send("temperature", String.format("%.2f", dht.getTemperature()));
+        send("humidity", String.format("%.2f", dht.getHumidity()));
         blueLed.set(true);
         redLed.set(false);
         lcd.setRGB(100, 100, 255);
@@ -95,7 +100,6 @@ public class Main {
         Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
       }
     }
-    buttonMonitor.shutdown();
   }
 
   private void send(String sensor, String value) {
@@ -121,9 +125,12 @@ public class Main {
   }
 
   private void close(GrovePi grovePi) throws IOException {
+    System.out.println("finalizing stuff.");
+    buttonMonitor.shutdown();
     httpExecutor.shutdownNow();
     blueLed.set(false);
     redLed.set(false);
+
   }
 
   public static void main(String[] args) throws Exception {
@@ -140,7 +147,7 @@ public class Main {
     }
 
     System.out.println("Starting system...");
-    
+
     control.createNewFile();
 
     GrovePi grovePi = new GrovePiDio();
@@ -198,13 +205,21 @@ public class Main {
     });
 
     lock.acquire();
-    running.set(false);
-    runner.shutdown();
-    consoleMonitor.shutdownNow();
-    fileMonitor.shutdownNow();
-    runner.awaitTermination(10, TimeUnit.SECONDS);
-    grovePi.close();
-    control.delete();
+    System.out.println("Application shutting down now!");
+    try {
+      control.delete();
+      running.set(false);
+      runner.shutdown();
+      consoleMonitor.shutdownNow();
+      fileMonitor.shutdownNow();
+      runner.awaitTermination(10, TimeUnit.SECONDS);
+    } catch (Exception e) {
+    }
+    try {
+      grovePi.close();
+    } catch (Exception e) {
+    }
+
     System.exit(0);
   }
 

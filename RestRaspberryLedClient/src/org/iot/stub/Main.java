@@ -1,6 +1,7 @@
 package org.iot.stub;
 
 import java.io.File;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -12,21 +13,22 @@ import java.util.logging.Logger;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import jdk.dio.DeviceConfig;
 import jdk.dio.DeviceManager;
 import jdk.dio.gpio.GPIOPin;
 import jdk.dio.gpio.GPIOPinConfig;
 /*
- -Djava.library.path="/home/pi/dio/build/so" -Djava.security.policy="/home/pi/dio/dio.policy"
+ -Djava.library.path="/home/pi/dio/dev-26d04027287d/build/so" -Djava.security.policy="/home/pi/dio/dio.policy"
  */
 
 public class Main {
 
   public void run(AtomicBoolean running) throws Exception {
+    System.out.println("Creating HTTP connection...");
     Client client = ClientBuilder.newClient();
     WebTarget target = client.target("http://192.168.1.100:8080/SensorPanel/rest/sensors/");
-
+    System.out.println("Opening GPIO...");
+// Yellow led
     GPIOPinConfig led17config = new GPIOPinConfig(
             DeviceConfig.DEFAULT,
             17,
@@ -35,20 +37,54 @@ public class Main {
             GPIOPinConfig.TRIGGER_NONE,
             false
     );
+// Red led
+    GPIOPinConfig led4config = new GPIOPinConfig(
+            DeviceConfig.DEFAULT,
+            4,
+            GPIOPinConfig.DIR_OUTPUT_ONLY,
+            GPIOPinConfig.MODE_OUTPUT_PUSH_PULL,
+            GPIOPinConfig.TRIGGER_NONE,
+            false
+    );
+// Blue led
+    GPIOPinConfig led22config = new GPIOPinConfig(
+            DeviceConfig.DEFAULT,
+            22,
+            GPIOPinConfig.DIR_OUTPUT_ONLY,
+            GPIOPinConfig.MODE_OUTPUT_PUSH_PULL,
+            GPIOPinConfig.TRIGGER_NONE,
+            false
+    );
 
-    try (GPIOPin led17 = DeviceManager.open(GPIOPin.class, led17config)) {
-
+    try (GPIOPin led17 = DeviceManager.open(GPIOPin.class, led17config);
+            GPIOPin led4 = DeviceManager.open(GPIOPin.class, led4config);
+            GPIOPin led22 = DeviceManager.open(GPIOPin.class, led22config)) {
+      System.out.println("Main loop started.");
       while (running.get()) {
-        String response = target.path("Temperature")
-                .request(MediaType.TEXT_PLAIN)
-                .get(String.class);
-        double temp = Double.parseDouble(response);
-        led17.setValue(temp > 10);
+//        String response = target.path("Temperature")
+//                .request(javax.ws.rs.core.MediaType.TEXT_PLAIN)
+//                .get(String.class);
+//        double temp = Double.parseDouble(response);
+        double temp = new Random().nextInt(40);
+        System.out.format("Temperature from REST service: %.2f", temp);
+        if (temp > 30) {
+          led17.setValue(false);
+          led22.setValue(false);
+          led4.setValue(true);
+        } else if (temp < 10) {
+          led17.setValue(false);
+          led22.setValue(true);
+          led4.setValue(false);
+        } else {
+          led17.setValue(true);
+          led22.setValue(false);
+          led4.setValue(false);
+        }
         Thread.sleep(1000);
       }
-
       led17.setValue(false);
-
+      led4.setValue(false);
+      led22.setValue(false);
     }
   }
 
@@ -111,12 +147,16 @@ public class Main {
     });
 
     lock.acquire();
+    System.out.println("Application Shutting Down Now!");
     running.set(false);
-    runner.shutdown();
-    consoleMonitor.shutdownNow();
-    fileMonitor.shutdownNow();
-    runner.awaitTermination(10, TimeUnit.SECONDS);
-    control.delete();
+    try {
+      control.delete();
+      runner.shutdown();
+      consoleMonitor.shutdownNow();
+      fileMonitor.shutdownNow();
+      runner.awaitTermination(10, TimeUnit.SECONDS);
+    } catch (Exception e) {
+    }
     System.exit(0);
   }
 
