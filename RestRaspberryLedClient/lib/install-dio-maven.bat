@@ -1,1 +1,0 @@
-call mvn install:install-file -Dfile=dio.jar -DgroupId=jdk.dio -DartifactId=dio -Dversion=1.0 -Dpackaging=jar

@@ -17,6 +17,9 @@ import jdk.dio.DeviceConfig;
 import jdk.dio.DeviceManager;
 import jdk.dio.gpio.GPIOPin;
 import jdk.dio.gpio.GPIOPinConfig;
+/*
+ -Djava.library.path="/home/pi/dio/build/so" -Djava.security.policy="/home/pi/dio/dio.policy"
+ */
 
 public class Main {
 
@@ -43,6 +46,8 @@ public class Main {
         led17.setValue(temp > 10);
         Thread.sleep(1000);
       }
+
+      led17.setValue(false);
 
     }
   }
