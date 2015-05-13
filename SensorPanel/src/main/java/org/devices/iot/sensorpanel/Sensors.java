@@ -29,4 +29,12 @@ public class Sensors {
             })
             .collect(Collectors.toList());
   }
+
+  public synchronized List<String[]> getRawSensors() {
+    return sensors.entrySet()
+            .stream()
+            .map((entry) -> {
+              return new String[]{entry.getKey(), entry.getValue()};
+            }).collect(Collectors.toList());
+  }
 }

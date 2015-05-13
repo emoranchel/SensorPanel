@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>TODO supply a title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="res/jquery-1.9.1.js"></script>
+    <script src="res/jquery-ui-1.10.2.custom.min.js"></script>
+    <link rel="stylesheet" href="res/jquery-ui-1.10.2.custom.css"/>
+    <style>
+      .Sensor{
+        border: 1px solid #0f1b62; padding: 4px; margin: 10px;
+      }
+    </style>
+    <script>
+      $(function () {
+        socket = new WebSocket("ws://192.168.1.100:8080/SensorPanel/ws/notify/ALL");
+        socket.onmessage = function (event) {
+          var data = event.data.split("|");
+          var sensor = $("#" + data[0]);
+          if (!sensor.length) {
+            sensor = $("<div class=\"Sensor\"></div>");
+            $("#content").append(sensor);
+          }
+          sensor.html(data[0] + ": <b>" + data[1] + "</b>");
+          sensor.effect("Highlight", {}, 500);
+        };
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Sensor Panel</h1>
+    <div id="content">
+    </div>
+  </body>
+</html>

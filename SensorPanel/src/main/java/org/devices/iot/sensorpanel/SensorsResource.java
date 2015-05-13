@@ -1,6 +1,7 @@
 package org.devices.iot.sensorpanel;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -15,6 +16,9 @@ public class SensorsResource {
 
   @Inject
   private Sensors sensors;
+  @Inject
+  @SensorUpdate
+  private Event<SensorUpdateEvent> updateEvent;
 
   @GET
   @Produces("text/plain")
@@ -28,5 +32,6 @@ public class SensorsResource {
   @Consumes("text/plain")
   public void putText(String value, @PathParam("sensor") String sensor) {
     sensors.set(sensor, value);
+    updateEvent.fire(new SensorUpdateEvent(sensor, value));
   }
 }
