@@ -19,7 +19,7 @@ public class Main {
 
   public static void main(String[] args) {
     Client client = ClientBuilder.newClient();
-    WebTarget webTarget = client.target("http://192.168.1.100:8080/SensorPanel/rest/sensors/");
+    WebTarget webTarget = client.target("http://localhost:8080/SensorPanel/rest/sensors/");
     webTarget.path("test").request().post(Entity.text(new Random().nextInt(100)));
   }
 }

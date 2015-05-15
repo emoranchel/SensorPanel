@@ -15,7 +15,7 @@
     </style>
     <script>
       $(function () {
-        socket = new WebSocket("ws://192.168.1.100:8080/SensorPanel/ws/notify/ALL");
+        socket = new WebSocket("ws://localhost:8080/SensorPanel/ws/notify/ALL");
         socket.onmessage = function (event) {
           var data = event.data.split("|");
           var sensor = $("#" + data[0]);
